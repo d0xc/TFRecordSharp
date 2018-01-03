@@ -1,0 +1,82 @@
+﻿syntax = "proto3";
+
+package d1100.data;
+
+// Represents a single observation of EOD dailyOHLCV
+// with both adjusted and unadjusted values
+// in particular that found at
+// https://www.quandl.com/databases/WIKIP
+// 
+// data comes like this from the CSV
+// 0 ticker A
+// 1 date 1999-11-18
+// 2 open 45.5
+// 3 high 50.0
+// 4 low 40.0
+// 5 close 44.0
+// 6 volume 44739900.0
+// 7 ex-dividend 0.0
+// 8 split_ratio 1.0
+// 9 adj_open 31.041951216877
+// 10 adj_high 34.112034304261
+// 11 adj_low 27.289627443409
+// 12 adj_close 30.018590187749
+// 13 adj_volume 44739900.0
+//
+// which I leave intact except for converting the date to unix timestamp
+message WikiDailyOHLCV {
+	string ticker = 1;
+	int64 ts = 2;
+	double open = 3;
+	double high = 4;
+	double low = 5;
+	double close = 6;
+	double volume = 7;
+	double exDividend = 8;
+	double splitRatio = 9;
+	double adjOpen = 10;
+    double adjHigh = 11;
+	double adjLow = 12;
+	double adjClose = 13;
+	double adjVolume = 14;
+}
+
+// column oriented using PB repeated fields
+// which will be packed in proto3
+message WikiDailyColOHLCV {
+	fixed64 dayts = 1;
+	repeated string tickers = 2;
+	repeated double opens = 3;
+	repeated double highs = 4;
+	repeated double lows = 5;
+	repeated double closes = 6;
+	repeated double volumes = 7;
+	repeated double exDividends = 8;
+	repeated double splitRatios = 9;
+	repeated double adjOpens = 10;
+    repeated double adjHighs = 11;
+	repeated double adjLows = 12;
+	repeated double adjCloses = 13;
+	repeated double adjVolumes = 14;
+}
+
+// An alternative using the little indian raw doubles
+// except for strings. I should know the size based on 
+// number of tickers so should be able to reconstruct the
+// underlying array pretty efficiently
+message WikiDailyColBytesOHLCV {
+	fixed64 dayts = 1;
+	repeated string tickers = 2;
+	bytes opens = 3;
+	bytes highs = 4;
+	bytes lows = 5;
+	bytes closes = 6;
+	bytes volumes = 7;
+	bytes exDividends = 8;
+	bytes splitRatios = 9;
+	bytes adjOpens = 10;
+    bytes adjHighs = 11;
+	bytes adjLows = 12;
+	bytes adjCloses = 13;
+	bytes adjVolumes = 14;
+}
