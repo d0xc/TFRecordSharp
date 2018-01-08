@@ -5,10 +5,15 @@
 #r "DotNetZip.dll"
 #r "Google.Protobuf.dll"
 #r "WikiPricesPB.dll"
+<<<<<<< HEAD
 #r "Parquet.dll"
 #r "TFRecordSharp.dll"
 
 
+=======
+#r "TFRecordSharp.dll"
+
+>>>>>>> 7ac4f9065a19eb04701a3f3ebe5bd0cbc70d079c
 open System.Text
 
 open D1100.Data
@@ -49,8 +54,11 @@ recsZlib = recsZlibRestored
 open System.IO
 open Ionic.Zip
 open Google.Protobuf
+<<<<<<< HEAD
 open Parquet
 open Parquet.Data
+=======
+>>>>>>> 7ac4f9065a19eb04701a3f3ebe5bd0cbc70d079c
 open D1100.Data.Encoding
 
 let scriptdir = __SOURCE_DIRECTORY__
@@ -103,9 +111,13 @@ let WikiPriceEODToProtoWikiPriceDaySeq (wikipricepath:string) =
             let ts = System.DateTime.Parse(lia.[1]).Subtract(epoch0).TotalSeconds |> int64 // 1 date 1999-11-18
             yield { ts = ts; lia = lia} }
 
+<<<<<<< HEAD
 ///////////////////////////////////////////////////////////////////////////////
 /// protocol buffer tests here
 //////////////////////////////////////////////////////////////////////////////
+=======
+
+>>>>>>> 7ac4f9065a19eb04701a3f3ebe5bd0cbc70d079c
         
 /// each PB is one row in the file
 /// more efficient memory wise to creat the PB's because no
@@ -246,6 +258,7 @@ let mapBytesToPBFun =
     fun (ba: byte[]) -> WikiDailyOHLCV.Parser.ParseFrom(ba)
 ///}
 
+<<<<<<< HEAD
 ///////////////////////////////////////////////////////////////////////////////
 /// parquet tests
 ///////////////////////////////////////////////////////////////////////////////
@@ -287,6 +300,8 @@ let ProtoWikiPriceDaysToWikiParquet (os: ProtoWikiPriceDay seq) =
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
+=======
+>>>>>>> 7ac4f9065a19eb04701a3f3ebe5bd0cbc70d079c
 
 // slurp up the whole file - takes a lot of memory
 //let wpProtoPriceDay = wikipricefile |> WikiPriceEODToProtoWikiPriceDay
@@ -376,6 +391,7 @@ do wps |> TFRecord.WriteAllRecords mapPBToBytesFun "test_wp_all_pb_no_zlib_1M.da
 
 do wps |> TFRecord.WriteAllRecordsZlibCompressed mapPBToBytesFun "test_wp_all_pb_zlib_1M.dat"
 
+<<<<<<< HEAD
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Parquet file tests
@@ -398,6 +414,8 @@ wpProtoPriceDayLtd
 |> WriteDataSet CompressionMethod.Snappy "test_wp_all_pq_snappy_1M.parquet"
 
 
+=======
+>>>>>>> 7ac4f9065a19eb04701a3f3ebe5bd0cbc70d079c
 ///////////////////////////////////////////////////////////////////////////////
 // FYI just truncating the csv file I get
 // for 1M rows 118M bytes / 27M bytes zipped
