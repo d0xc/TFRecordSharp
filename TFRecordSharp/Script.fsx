@@ -5,7 +5,9 @@
 #r "DotNetZip.dll"
 #r "Google.Protobuf.dll"
 #r "WikiPricesPB.dll"
+#r "Parquet.dll"
 #r "TFRecordSharp.dll"
+
 
 open System.Text
 
@@ -47,6 +49,8 @@ recsZlib = recsZlibRestored
 open System.IO
 open Ionic.Zip
 open Google.Protobuf
+open Parquet
+open Parquet.Data
 open D1100.Data.Encoding
 
 let scriptdir = __SOURCE_DIRECTORY__
@@ -99,7 +103,9 @@ let WikiPriceEODToProtoWikiPriceDaySeq (wikipricepath:string) =
             let ts = System.DateTime.Parse(lia.[1]).Subtract(epoch0).TotalSeconds |> int64 // 1 date 1999-11-18
             yield { ts = ts; lia = lia} }
 
-
+///////////////////////////////////////////////////////////////////////////////
+/// protocol buffer tests here
+//////////////////////////////////////////////////////////////////////////////
         
 /// each PB is one row in the file
 /// more efficient memory wise to creat the PB's because no
@@ -240,6 +246,47 @@ let mapBytesToPBFun =
     fun (ba: byte[]) -> WikiDailyOHLCV.Parser.ParseFrom(ba)
 ///}
 
+///////////////////////////////////////////////////////////////////////////////
+/// parquet tests
+///////////////////////////////////////////////////////////////////////////////
+
+/// create a parquet DataSet
+let ProtoWikiPriceDaysToWikiParquet (os: ProtoWikiPriceDay seq) =
+    let ds = 
+        new DataSet(    new DataField<string>("ticker"),
+                        new DataField<int64>("ts"),
+                        new DataField<double>("open"),
+                        new DataField<double>("high"),
+                        new DataField<double>("low"),
+                        new DataField<double>("close"),
+                        new DataField<double>("volume"),
+                        new DataField<double>("exDividend"),
+                        new DataField<double>("splitRatio"),
+                        new DataField<double>("adjOpen"),
+                        new DataField<double>("adjHigh"),
+                        new DataField<double>("adjLow"),
+                        new DataField<double>("adjClose"),
+                        new DataField<double>("adjVolume"))
+    for o in os do  
+        ds.Add( o.lia.[0], // 0 ticker A
+                o.ts,
+                (2 |> ParseDoubleOrNaN o.lia), //opens.[i] <- 
+                (3 |> ParseDoubleOrNaN o.lia), //highs.[i] <- 
+                (4 |> ParseDoubleOrNaN o.lia), //lows.[i] <- 
+                (5 |> ParseDoubleOrNaN o.lia), //closes
+                (6 |> ParseDoubleOrNaN o.lia), //volumes
+                (7 |> ParseDoubleOrNaN o.lia), //exDividends.[i] <-                 
+                (8 |> ParseDoubleOrNaN o.lia), //splitRatios.[i] <- 
+                (9 |> ParseDoubleOrNaN o.lia), //adjOpens.[i] <- 
+                (10 |> ParseDoubleOrNaN o.lia), // adjHighs.[i] <- 
+                (11 |> ParseDoubleOrNaN o.lia), //adjLows.[i] <- 
+                (12 |> ParseDoubleOrNaN o.lia),      //adjCloses.[i] <- 
+                (13 |> ParseDoubleOrNaN o.lia) ) //adjVolumes.[i] <-
+    ds
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
 // slurp up the whole file - takes a lot of memory
 //let wpProtoPriceDay = wikipricefile |> WikiPriceEODToProtoWikiPriceDay
@@ -328,6 +375,28 @@ wp = wpZlibRestored
 do wps |> TFRecord.WriteAllRecords mapPBToBytesFun "test_wp_all_pb_no_zlib_1M.dat"
 
 do wps |> TFRecord.WriteAllRecordsZlibCompressed mapPBToBytesFun "test_wp_all_pb_zlib_1M.dat"
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// Parquet file tests
+/// wow fast. uncompressed = 20 secs, compressed 21 secs
+/// 109MB / 50MB compressed
+
+
+let WriteDataSet (compression: Parquet.CompressionMethod) (filename:string) ds =
+    use fs = new FileStream(filename,FileMode.Create,FileAccess.Write)
+    do ParquetWriter.Write(ds, fs, compression)
+
+// no compression
+wpProtoPriceDayLtd 
+|> ProtoWikiPriceDaysToWikiParquet 
+|> WriteDataSet CompressionMethod.None "test_wp_all_pq_nocompress_1M.parquet"
+
+// snappy
+wpProtoPriceDayLtd 
+|> ProtoWikiPriceDaysToWikiParquet 
+|> WriteDataSet CompressionMethod.Snappy "test_wp_all_pq_snappy_1M.parquet"
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // FYI just truncating the csv file I get
